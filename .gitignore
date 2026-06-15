@@ -51,7 +51,7 @@ models/statepoint_eval/**
 !models/statepoint_eval/*.py
 !models/statepoint_eval/*.sh
 !models/statepoint_eval/*.md
-!models/statepoint_eval/*.json
+!models/statepoint_eval/statepoints.json
 !models/statepoint_eval/templates/
 !models/statepoint_eval/templates/*
 !models/statepoint_eval/statepoints/
@@ -61,6 +61,16 @@ models/statepoint_eval/**
 !models/statepoint_eval/chimes_params/**
 !models/statepoint_eval/chimes_params/**/params.txt
 models/statepoint_eval/runs/
+# Generated at submit time (templates/ versions are tracked)
+models/statepoint_eval/run_*_bundle.cmd
+models/statepoint_eval/*_bundle_submitted.json
+models/statepoint_eval/*_bundle_*.out
+models/statepoint_eval/*_bundle_*.err
+models/pruned_models/runs/
+models/pruned_models/run_debug_pct*_bundle.cmd
+models/pruned_models/*_bundle_submitted.json
+models/pruned_models/*_bundle_*.out
+models/pruned_models/*_bundle_*.err
 models/fingerprints/
 models/full_model/
 models/gt_simulations/
@@ -151,6 +161,7 @@ element_switching/cn_switching_image/**
 *.hist
 *.lammpstrj
 **/traj.lammpstrj
+**/rdf.dat
 **/log.lammps
 **/stdoutmsg*
 **/output.txt
@@ -204,3 +215,4 @@ __pycache__/
 # SLURM
 slurm-*.out
 slurm-*.err
+**/erroutmsg*

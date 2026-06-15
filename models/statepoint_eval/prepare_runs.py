@@ -75,16 +75,34 @@ def parse_args() -> argparse.Namespace:
         help="Refresh statepoints/*/starting_frame.xyzf from models/pruned_simulations/.",
     )
     parser.add_argument(
-        "--equil-steps",
+        "--md-steps",
         type=int,
-        default=10_000,
-        help="NVT equilibration steps (0.2 fs timestep).",
+        default=6_000,
+        help="NVT MD steps (1 fs timestep by default → 6 ps).",
     )
     parser.add_argument(
-        "--prod-steps",
+        "--timestep-fs",
+        type=float,
+        default=1.0,
+        help="LAMMPS timestep in fs (real units); 1.0 fs matches metal units 0.001 ps.",
+    )
+    parser.add_argument(
+        "--thermo-freq",
         type=int,
-        default=50_000,
-        help="NVT production steps with RDF averaging.",
+        default=5,
+        help="Thermo output interval (steps).",
+    )
+    parser.add_argument(
+        "--dump-freq",
+        type=int,
+        default=1,
+        help="Trajectory dump interval (steps).",
+    )
+    parser.add_argument(
+        "--nvt-tau-fs",
+        type=float,
+        default=50.0,
+        help="NVT temperature damping (fs); 50 fs matches metal units 0.05 ps.",
     )
     parser.add_argument(
         "--partition",
@@ -247,8 +265,10 @@ def prepare_run(
     shutil.copy2(params_src, run_dir / "params.txt")
 
     if args.debug_queue:
-        rdf_nevery, rdf_nrepeat, rdf_periods = 10, 2, 10
+        rdf_nevery, rdf_nrepeat = 10, 2
+        rdf_periods = rdf_nevery * rdf_nrepeat
     else:
+        # Six RDF samples over a 6000-step run (Nfreq must equal Nevery * Nrepeat).
         rdf_nevery, rdf_nrepeat, rdf_periods = 100, 10, 1000
 
     in_lammps = render_template(
@@ -256,8 +276,11 @@ def prepare_run(
         {
             "TEMPERATURE_K": str(int(statepoint["temperature_k"])),
             "SEED": str(seed_for_run(model_id, statepoint_id)),
-            "EQUIL_STEPS": str(args.equil_steps),
-            "PROD_STEPS": str(args.prod_steps),
+            "TIMESTEP_FS": str(args.timestep_fs),
+            "MD_STEPS": str(args.md_steps),
+            "THERMO_FREQ": str(args.thermo_freq),
+            "DUMP_FREQ": str(args.dump_freq),
+            "NVT_TAU_FS": str(args.nvt_tau_fs),
             "RDF_NEVERY": str(rdf_nevery),
             "RDF_NREPEAT": str(rdf_nrepeat),
             "RDF_PERIODS": str(rdf_periods),
@@ -307,15 +330,13 @@ def apply_run_defaults(args: argparse.Namespace) -> None:
             args.walltime = "01:00:00"
         if args.ntasks is None:
             args.ntasks = 48
-        if args.equil_steps == 10_000:
-            args.equil_steps = 100
-        if args.prod_steps == 50_000:
-            args.prod_steps = 200
+        if args.md_steps == 6_000:
+            args.md_steps = 300
     else:
         if args.partition is None:
             args.partition = "skx"
         if args.walltime is None:
-            args.walltime = "01:00:00"
+            args.walltime = "02:00:00"
         if args.ntasks is None:
             args.ntasks = 48
 

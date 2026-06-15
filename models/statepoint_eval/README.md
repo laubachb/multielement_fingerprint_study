@@ -49,7 +49,7 @@ Each `runs/{model}/{statepoint}/` directory contains:
 
 - `data.in` — LAMMPS data from `starting_frame.xyzf`
 - `params.txt` — ChIMES parameters for that model
-- `in.lammps` — NVT equilibration (10 ps) + NVT production (10 ps) with `compute rdf`
+- `in.lammps` — NVT production (6000 steps, 1 fs timestep, ~6 ps) with `compute rdf`
 - `run_lammps.cmd` — SLURM launcher (48 MPI ranks, `skx` partition by default)
 
 **Outputs** (gitignored): `rdf.dat`, `traj.lammpstrj`, `log.lammps`, `output.txt`.
