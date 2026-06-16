@@ -29,7 +29,7 @@ neigh_modify    delay 0 every 1 check yes
 read_data       data.in
 velocity        all create ${temp} ${seed} loop all mom yes rot yes dist gaussian
 
-pair_style      chimesFF fingerprint 1
+pair_style      chimesFF fingerprint 0
 pair_coeff      * * params.txt
 
 timestep        ${delt}
