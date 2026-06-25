@@ -146,6 +146,15 @@ def render_template(path: Path, mapping: dict[str, str]) -> str:
     return text
 
 
+def remove_cluster_dumps(run_dir: Path) -> int:
+    """Remove stale ChIMES fingerprint cluster files from a run directory."""
+    removed = 0
+    for path in run_dir.glob("*_clusters.txt"):
+        path.unlink()
+        removed += 1
+    return removed
+
+
 def sync_statepoints(dry_run: bool) -> int:
     if not LEGACY_STATEPOINTS.is_dir():
         print(f"Warning: legacy source missing: {LEGACY_STATEPOINTS}", file=sys.stderr)
@@ -261,6 +270,9 @@ def prepare_run(
         return run_dir
 
     run_dir.mkdir(parents=True, exist_ok=True)
+    removed = remove_cluster_dumps(run_dir)
+    if removed:
+        print(f"Removed {removed} cluster file(s) from {run_dir}")
     convert_xyzf(xyzf_path, run_dir / "data.in", dry_run=False)
     shutil.copy2(params_src, run_dir / "params.txt")
 
