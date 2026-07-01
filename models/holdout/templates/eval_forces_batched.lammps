@@ -1,0 +1,30 @@
+# Batched MD hold-out force evaluation — one LAMMPS process, many structures.
+# Snapshot list and frame count are injected by evaluate_md_forces.py.
+
+variable nframes index {{NFRAMES}}
+
+label snaploop
+variable iframe loop ${nframes}
+
+clear
+units real
+atom_style atomic
+boundary p p p
+atom_modify sort 0 0.0
+atom_modify map array
+newton on
+
+read_data data_files/data_${iframe}.in
+
+pair_style chimesFF
+pair_coeff * * params.txt
+
+compute fprop all property/atom fx fy fz
+dump 1 all custom 1 dumps/frame_${iframe}.dump id type fx fy fz
+dump_modify 1 sort id
+
+run 0
+undump 1
+
+next iframe
+jump SELF snaploop
