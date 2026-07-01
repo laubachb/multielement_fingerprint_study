@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Submit one skx-dev debug job for the full MD hold-out force evaluation.
+# Submit legacy per-snapshot MD hold-out force evaluation (slow; use submit_eval_batched.sh).
 #
 #   cd models/holdout
-#   python extract_md_holdout.py --clean
-#   bash submit_eval_batched.sh    # recommended (batched LAMMPS, parallel models)
-#   bash submit_eval.sh            # legacy per-snapshot launches
+#   python extract_md_holdout.py
+#   bash submit_eval_batched.sh     # recommended
+#   bash submit_eval_pruned.sh      # pruned only, diverse-first
+#   bash submit_eval.sh             # legacy
 
 set -euo pipefail
 cd "$(dirname "$0")"

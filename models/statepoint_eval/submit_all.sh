@@ -38,6 +38,12 @@ for model_dir in "${RUNS_DIR}"/*/; do
             continue
         fi
 
+        if [[ -f "${run_dir}/log.lammps" ]] \
+            && grep -qE "^(run |Loop time)" "${run_dir}/log.lammps" 2>/dev/null; then
+            echo "Skipping ${name} (MD already attempted)"
+            continue
+        fi
+
         if [[ "${submitted}" -ge "${BATCH_SIZE}" ]]; then
             echo "Batch limit (${BATCH_SIZE}) reached; re-run to submit more."
             exit 0

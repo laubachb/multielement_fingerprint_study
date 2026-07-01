@@ -45,6 +45,16 @@ runs/a000_pct001_rep00/
 
 Walltime / partition scale with subset size (skx-dev for ≤10 frames, skx for larger).
 
+## Validation downstream
+
+| Stage | Directory | Metric |
+|-------|-----------|--------|
+| In-sample forces | (this step) | `Ax.txt` vs `b.txt` RMSE |
+| Statepoint RDF | `models/statepoint_eval/` | g(r) vs full model |
+| MD hold-out forces | `models/holdout/` | Forces on full-model MD frames vs full |
+
+Impact figures: `models/pruning_analysis/make_plots.py`.
+
 ## Outputs (gitignored)
 
 `runs/` fitting artifacts: `A.txt`, `b.txt`, `params.txt`, `fm_setup.log`, `solve.log`, etc.

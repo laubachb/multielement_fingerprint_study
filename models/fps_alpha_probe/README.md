@@ -4,7 +4,9 @@ Analyzes whether **which fingerprint α you FPS in** materially changes the
 training subset, and how uniformly each subset covers the CN thermodynamic grid.
 
 Secondary probes for: *which α is best for training-set construction?*
-MLIP quality still requires hold-out forces / RDF once fits complete.
+**MLIP quality** validation uses `models/statepoint_eval/` (RDF) and
+`models/holdout/` (MD hold-out forces) once fits complete; summary figures in
+`models/pruning_analysis/`.
 
 ## Analyses
 

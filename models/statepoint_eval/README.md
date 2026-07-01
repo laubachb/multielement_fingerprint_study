@@ -13,9 +13,9 @@ tree). This directory is the **tracked** evaluation workflow.
 statepoint_eval/
   statepoints.json           # metadata (T, ρ, N%, full_dft frame index)
   statepoints/               # starting_frame.xyzf per statepoint (tracked)
-  chimes_params/
-    full/params.txt          # 100% model (from element_switching/model/)
-    a000_pct001_rep00/       # added when pruned fits complete
+  chimes_params/             # synced from pruned_models/ + full model; gitignored
+    full/params.txt
+    a000_pct001_rep00/       # populated by prepare_runs.py --sync-params
   templates/                 # in.lammps + SLURM cmd
   prepare_runs.py
   runs/                      # generated per (model, statepoint); gitignored
@@ -56,6 +56,13 @@ Each `runs/{model}/{statepoint}/` directory contains:
 
 RDF pairs: C–C (1–1), C–N (1–2), N–N (2–2). Atom types follow sorted element
 order from `xyzf2data.py` (C = 1, N = 2).
+
+### Downstream: MD hold-out validation
+
+`models/holdout/` samples random production frames from **`runs/full/*/traj.lammpstrj`**
+(not DFT frames) for out-of-training force comparison. Ensure full-model MD has
+completed for each statepoint you want in the hold-out set (case 4 is excluded
+due to instability). See `models/holdout/README.md`.
 
 ## Statepoints
 

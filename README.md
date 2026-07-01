@@ -62,6 +62,10 @@ multielement_study/
 │   ├── workflows/           tracked scripts (fingerprint + full_model)
 │   ├── sampling/            FPS pruned-frame selection (tracked scripts)
 │   ├── pruned_models/       ChIMES fitting on FPS subsets (tracked scripts)
+│   ├── statepoint_eval/     NVT MD + RDF at CN thermodynamic statepoints
+│   ├── holdout/             MD hold-out force validation (pruned vs full)
+│   ├── pruning_analysis/    training RMSE + RDF + hold-out impact figures
+│   ├── fps_alpha_probe/     FPS α overlap / coverage diagnostics
 │   └── fingerprints/        CN α-sweep data trees (gitignored)
 ├── hea_study/
 │   ├── alpha_*-histograms/  HEA fingerprint workflows (scripts tracked)
@@ -228,6 +232,53 @@ bash submit_all.sh        # submit gen_Amat → solve_Amat chains
 
 Each run under `runs/a*_pct*_rep*/` produces `params.txt`, `A.txt`, `b.txt`, etc.
 
+### `models/statepoint_eval/` (tracked scripts, gitignored runs)
+
+NVT production MD and RDF accumulation at 10 CN thermodynamic statepoints for the
+full model and pruned fits. Starting frames and workflow scripts are tracked;
+`chimes_params/` (synced copies) and `runs/` are gitignored.
+
+```bash
+cd models/statepoint_eval
+python prepare_runs.py --sync-params --models full
+bash submit_full_model.sh
+```
+
+See `models/statepoint_eval/README.md`.
+
+### `models/holdout/` (tracked scripts, gitignored data)
+
+MD hold-out force validation: sample random frames from **full-model** statepoint
+trajectories and compare pruned vs full ChIMES forces. Uses batched LAMMPS (one
+process per model) for throughput.
+
+```bash
+cd models/holdout
+python extract_md_holdout.py
+bash submit_eval_batched.sh
+bash submit_eval_pruned.sh     # diverse-first; re-run to queue more
+python merge_metrics.py
+```
+
+See `models/holdout/README.md`.
+
+### `models/pruning_analysis/` (tracked scripts, gitignored figures)
+
+Publication figures for pruning impact: training RMSE, RDF deviation, and MD
+hold-out force error vs retention and FPS α.
+
+```bash
+cd models/pruning_analysis && python make_plots.py
+```
+
+See `models/pruning_analysis/README.md`.
+
+### `models/fps_alpha_probe/` (tracked scripts, gitignored output)
+
+Diagnostics for FPS training-set construction (Jaccard overlap, statepoint coverage).
+Does not replace hold-out / RDF validation — see `models/holdout/` and
+`models/statepoint_eval/`.
+
 ---
 
 ## `hea_study/` — high-entropy alloy fingerprints and model fitting
@@ -320,6 +371,9 @@ python analyze_alpha_umap.py
 cd element_switching/graphite
 python create_swap_and_alpha_dirs.py
 sbatch run_all_alphas.sh
+
+# 5. Pruning impact (after pruned fits + statepoint MD + hold-out eval)
+cd models/pruning_analysis && python make_plots.py
 ```
 
 ## Dependencies

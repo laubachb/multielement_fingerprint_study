@@ -8,8 +8,14 @@ aggregated RMSE metrics relative to the full (100%) model.
 Usage
 -----
   cd models/holdout
-  python evaluate_md_forces.py              # local loop (compute node)
-  sbatch run_eval_forces.cmd
+  python extract_md_holdout.py
+  bash submit_eval_batched.sh              # full cache + pruned array
+  bash submit_eval_pruned.sh               # pruned only (diverse-first)
+  python merge_metrics.py
+
+  # Legacy per-snapshot mode (slow):
+  python evaluate_md_forces.py --ntasks 1
+  sbatch run_eval_all.cmd
 """
 
 from __future__ import annotations
@@ -627,7 +633,7 @@ def eval_all(args: argparse.Namespace) -> pd.DataFrame:
     if args.pruned_task_index is not None:
         task_path = SCRIPT_DIR / "pruned_task_list.json"
         if not task_path.is_file():
-            raise FileNotFoundError(f"Run submit_eval.sh first; missing {task_path}")
+            raise FileNotFoundError(f"Run submit_eval_pruned.sh first; missing {task_path}")
         tasks = json.loads(task_path.read_text(encoding="utf-8"))
         idx = args.pruned_task_index
         if idx < 0 or idx >= len(tasks):

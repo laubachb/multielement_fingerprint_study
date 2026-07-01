@@ -31,3 +31,7 @@ results/
 
 `selected_frames.txt` lists frames in FPS selection order (first line = random
 seed frame, each subsequent line maximizes distance to the set so far).
+
+Downstream: `models/pruned_models/` fits ChIMES on each subset;
+`models/fps_alpha_probe/` analyzes overlap/coverage; `models/holdout/` and
+`models/statepoint_eval/` validate fitted models.

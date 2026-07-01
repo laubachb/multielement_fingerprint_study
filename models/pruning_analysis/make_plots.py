@@ -356,7 +356,7 @@ def run(output_dir: Path) -> None:
         fig_md_force_vs_retention(md_long, fig_dir / "md_force_deviation_vs_retention.png")
         fig_md_force_by_case(md_long, fig_dir / "md_force_deviation_by_case.png")
     else:
-        print("\nNo MD hold-out force metrics (run models/holdout/submit_eval.sh).")
+        print("\nNo MD hold-out force metrics (run models/holdout/submit_eval_batched.sh).")
 
     if not list(fig_dir.glob("*.png")):
         return
