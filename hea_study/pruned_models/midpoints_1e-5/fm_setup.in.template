@@ -1,0 +1,60 @@
+####### CONTROL VARIABLES #######
+
+# TRJFILE # 
+        training.xyzf
+# WRAPTRJ # 
+        false
+# NFRAMES # 
+{{NFRAMES}}
+# NLAYERS # 
+        1
+# FITCOUL # 
+        false
+# CNSCOUL # 
+        false   
+# FITSTRS #
+        false
+# FITENER # 
+        false   
+# FITPOVR # 
+        false
+# PAIRTYP # 
+        CHEBYSHEV 12 5 2 -1 1
+# CHBTYPE #
+        MORSE
+# SPLITFI #
+        false
+
+
+####### TOPOLOGY VARIABLES #######
+
+
+# NATMTYP # 
+        2
+
+# TYPEIDX #     # ATM_TYP #     # ATMCHRG #     # ATMMASS # 
+1               Y                0.0             88.906
+2               Mg               0.0             24.305 
+
+# PAIRIDX #     # ATM_TY1 #     # ATM_TY1 #     # S_MINIM #     # S_MAXIM #     # S_DELTA #     # MORSE_LAMBDA #      # USEOVRP #     # NIJBINS #     # NIKBINS #     # NJKBINS #  
+1              Y               Y               0.98            7.0             0.01            1.40                   false           0               0               0
+2              Mg              Mg              1.86            7.0             0.01            1.09                   false           0               0               0
+3              Y               Mg              1.90            7.0             0.01            1.39                   false           0               0               0
+
+SPECIAL 3B S_MAXIM: SPECIFIC 4
+YYYYYY          YY              YY              YY              4.0             4.0             4.0
+YYYMgYMg        YMg             YMg             YY              4.0             4.0             4.0
+YMgYMgMgMg      MgMg            YMg             YMg             4.0             4.0             4.0
+MgMgMgMgMgMg    MgMg            MgMg            MgMg            4.0             4.0             4.0
+
+SPECIAL 4B S_MAXIM: SPECIFIC 5
+YYYYYYYYYYYY    YY              YY              YY              YY              YY              YY              4.0             4.0             4.0             4.0             4.0             4.0
+YYYYYMgYYYMgYMg YMg             YMg             YMg             YY              YY              YY              4.0             4.0             4.0             4.0             4.0             4.0
+YYYMgYMgYMgYMgMgMg MgMg         YMg             YMg             YMg             YMg             YY              4.0             4.0             4.0             4.0             4.0             4.0
+YMgYMgYMgMgMgMgMgMgMg MgMg      MgMg            YMg             MgMg            YMg             YMg             4.0             4.0             4.0             4.0             4.0             4.0
+MgMgMgMgMgMgMgMgMgMgMgMg MgMg   MgMg            MgMg            MgMg            MgMg            MgMg            4.0             4.0             4.0             4.0             4.0             4.0
+
+# FCUTTYP #
+TERSOFF 0.75
+
+# ENDFILE #

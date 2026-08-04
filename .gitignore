@@ -183,3 +183,42 @@ __pycache__/
 # SLURM
 slurm-*.out
 slurm-*.err
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Test-error plots, pruning-midpoint generation scripts, and their data
+#   (added for public release — scripts tracked, large data + PDFs ignored)
+# ══════════════════════════════════════════════════════════════════════════════
+# CN test-error plots (relative-to-full figure); data/ CSVs stay ignored
+!models/test_errors/
+models/test_errors/**
+!models/test_errors/*.py
+!models/test_errors/*.md
+!models/test_errors/test_error_frmse_3x3_relative_1e-1.png
+
+# CN pruning midpoint (37.5% / 62.5%) generation scripts
+!models/pruned_models/midpoints_1e-1/
+!models/pruned_models/midpoints_1e-1/*.cmd
+!models/pruned_models/midpoints_1e-1/*.py
+!models/pruned_models/midpoints_1e-1/*.sh
+
+# HEA pruning midpoint generation scripts
+!hea_study/pruned_models/
+hea_study/pruned_models/**
+!hea_study/pruned_models/midpoints_1e-5/
+!hea_study/pruned_models/midpoints_1e-5/*.cmd
+!hea_study/pruned_models/midpoints_1e-5/*.py
+!hea_study/pruned_models/midpoints_1e-5/*.sh
+
+# HEA test-error plot (deviation-from-full); deviation CSVs stay ignored
+!hea_study/test_errors/
+hea_study/test_errors/**
+!hea_study/test_errors/*.py
+!hea_study/test_errors/*.md
+!hea_study/test_errors/test_error_drmse_relative_hea.png
+
+# HEA FPS sampler (base script) + midpoint fm_setup template
+!hea_study/sampling/
+hea_study/sampling/**
+!hea_study/sampling/*.py
+!hea_study/sampling/*.md
+!hea_study/pruned_models/midpoints_1e-5/*.template
