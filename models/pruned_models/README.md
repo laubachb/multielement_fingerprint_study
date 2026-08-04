@@ -40,3 +40,11 @@ Walltime / partition scale with subset size (skx-dev for ≤10 frames, skx for l
 ## Outputs (gitignored)
 
 `runs/` fitting artifacts: `A.txt`, `b.txt`, `params.txt`, `fm_setup.log`, `solve.log`, etc.
+
+## Retention midpoints
+
+[`midpoints_1e-1/`](midpoints_1e-1/) adds the 37.5 % and 62.5 % retention tiers
+(midpoints of 25/50/75 %) re-solved at DLASSO **λ = 1e-1**, and self-contains its
+FPS → gen → solve → eval pipeline (`build_midpoint_runs.py`,
+`run_gen_solve_eval.cmd`, `eval_shard_perSP.py`). The resulting per-statepoint force
+RMSE feeds [`models/test_errors/`](../test_errors/).
