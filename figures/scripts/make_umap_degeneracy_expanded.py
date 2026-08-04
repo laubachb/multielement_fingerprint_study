@@ -19,7 +19,9 @@ import matplotlib
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-import umap
+# umap is only needed to RECOMPUTE embeddings; with the cached embeddings present
+# it is imported lazily inside the recompute branch (see main()), so the figure can
+# be regenerated without the umap package installed.
 from sklearn.cluster import KMeans
 
 matplotlib.rcParams.update(
@@ -42,7 +44,7 @@ DEFAULT_TRANSFER_DIR = HEA_DIR / "transfer_to_local-Apr2026"
 DEFAULT_LABEL_DIR = HEA_DIR / "alpha_0-histograms"
 DEFAULT_EXTXYZ = HEA_DIR / "data" / "DS_0bmdn3d792js_0.extxyz_MgY"
 CACHE_DIR = SCRIPT_DIR / "cache"
-WRITING_FIG = HEA_DIR.parent / "writing" / "figures" / "hea_umap_degeneracy.png"
+WRITING_FIG = Path(__file__).resolve().parents[1] / "hea_umap_degeneracy.png"  # figures/
 
 ALPHAS = [0.00, 0.25, 0.50, 0.75, 1.00]
 HIST_FILES = [
@@ -385,43 +387,52 @@ def plot_figure(
 
 def main() -> None:
     args = parse_args()
-    alpha_dirs = alpha_dirs_from_transfer(args.transfer_dir)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     emb_cache = CACHE_DIR / "umap_embeddings_3row.npz"
+    meta_cache = CACHE_DIR / "umap_meta_3row.npz"
 
-    for path in alpha_dirs.values():
-        if not path.is_dir():
-            raise FileNotFoundError(f"Missing alpha directory: {path}")
-    if not args.label_dir.is_dir():
-        raise FileNotFoundError(f"Missing label directory: {args.label_dir}")
-    if not args.extxyz.is_file():
-        raise FileNotFoundError(f"Missing extxyz: {args.extxyz}")
+    # Fast path: rebuild the figure from cached embeddings + per-frame metadata
+    # (labels, energies) alone, without the raw histogram trees / 16 MB extxyz
+    # (kept out of the repo for size). --recompute forces the full data path.
+    if emb_cache.is_file() and meta_cache.is_file() and not args.recompute:
+        mz = np.load(meta_cache)
+        frame_ids = list(mz["frame_ids"])
+        frame_dirs = [f"frame_{i}" for i in frame_ids]
+        labels = mz["labels"]
+        energy_all = mz["energy_all"]
+        alpha_dirs = None
+        print(f"Loaded cached metadata ({len(labels)} frames); "
+              "skipping raw histogram trees.")
+    else:
+        alpha_dirs = alpha_dirs_from_transfer(args.transfer_dir)
+        for path in alpha_dirs.values():
+            if not path.is_dir():
+                raise FileNotFoundError(f"Missing alpha directory: {path}")
+        if not args.label_dir.is_dir():
+            raise FileNotFoundError(f"Missing label directory: {args.label_dir}")
+        if not args.extxyz.is_file():
+            raise FileNotFoundError(f"Missing extxyz: {args.extxyz}")
+        candidate_frames = get_frame_list(alpha_dirs[0.00])
+        frame_dirs = [
+            f for f in candidate_frames if frame_ok(f, args.label_dir, alpha_dirs)
+        ]
+        frame_ids = [int(FRAME_RE.match(f).group(1)) for f in frame_dirs]
+        labels = np.array(
+            [frame_composition_label(f, args.label_dir) for f in frame_dirs]
+        )
+        e_map = load_energy_per_atom(args.extxyz)
+        energy_all = np.array([e_map[fid] for fid in frame_ids])
+        np.savez_compressed(meta_cache, frame_ids=np.array(frame_ids),
+                            labels=labels, energy_all=energy_all)
 
-    candidate_frames = get_frame_list(alpha_dirs[0.00])
-    frame_dirs = [
-        f for f in candidate_frames if frame_ok(f, args.label_dir, alpha_dirs)
-    ]
-    frame_ids = [int(FRAME_RE.match(f).group(1)) for f in frame_dirs]
     n_frames = len(frame_dirs)
-    print(f"Using {n_frames} frames (missing/NaN frames dropped).")
-
-    labels = np.array(
-        [frame_composition_label(f, args.label_dir) for f in frame_dirs]
-    )
-    e_map = load_energy_per_atom(args.extxyz)
-    energy_all = np.array([e_map[fid] for fid in frame_ids])
     mixed_mask = labels == 2
     energy_mix = energy_all[mixed_mask]
-    print(
-        "Composition counts — "
-        f"Y-only: {(labels == 0).sum()}, "
-        f"Mg-only: {(labels == 1).sum()}, "
-        f"Mixed: {(labels == 2).sum()}"
-    )
-    print(
-        f"Mixed energy/atom range: {energy_mix.min():.3f} … {energy_mix.max():.3f} "
-        f"(colorbar uses 2–98%ile)"
-    )
+    print(f"Using {n_frames} frames. Composition — "
+          f"Y-only: {(labels == 0).sum()}, Mg-only: {(labels == 1).sum()}, "
+          f"Mixed: {(labels == 2).sum()}")
+    print(f"Mixed energy/atom range: {energy_mix.min():.3f} … {energy_mix.max():.3f} "
+          f"(colorbar uses 2–98%ile)")
 
     if emb_cache.is_file() and not args.recompute:
         z = np.load(emb_cache)
@@ -435,6 +446,7 @@ def main() -> None:
             fp[alpha] = drop_zero_cols(raw)
             print(f"alpha={alpha:.2f}: fingerprint shape {fp[alpha].shape}")
 
+        import umap  # lazy: only needed when recomputing embeddings
         reducer = umap.UMAP(
             n_neighbors=args.n_neighbors,
             min_dist=args.min_dist,

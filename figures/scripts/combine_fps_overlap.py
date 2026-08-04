@@ -15,9 +15,9 @@ matplotlib.use("Agg")
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
-FIG_DIR = HERE.parent / "figures"
+HERE = Path(__file__).resolve().parent      # figures/scripts/
+OUT_DIR = HERE.parent / "data"              # figures/data/  (input CSVs)
+FIG_DIR = HERE.parent                       # figures/       (output PNG)
 
 plt.rcParams.update({"font.size": 10})
 

@@ -22,12 +22,10 @@ from matplotlib.colors import Normalize
 plt.rcParams.update({"font.size": 10, "axes.spines.top": False,
                      "axes.spines.right": False})
 
-HERE = Path(__file__).resolve().parent
-STUDY = HERE.parents[1]
-HEA = STUDY / "hea_study"
-TD = HEA / "transfer_to_local-Apr2026"
-EXTXYZ = HEA / "data" / "DS_0bmdn3d792js_0.extxyz_MgY"
-FIG = STUDY / "writing" / "figures" / "hea_frame_fingerprints"
+HERE = Path(__file__).resolve().parent          # figures/scripts/
+# histogram trees for the two plotted frames ship in figures/data/hea_histograms/
+TD = HERE.parent / "data" / "hea_histograms"
+FIG = HERE.parent / "hea_frame_fingerprints"    # figures/
 
 ALPHA_DIRS = {
     0.00: "alpha_0-histograms", 0.25: "alpha_025-histograms",
@@ -71,7 +69,10 @@ def energies_per_atom(extxyz):
 
 
 def main():
-    E = energies_per_atom(EXTXYZ)
+    # DFT energies (eV/atom) for the two plotted FRAMES, read once from the source
+    # extxyz (16 MB, not shipped to keep the repo light). To use other frames, run
+    # energies_per_atom() on the extxyz and update this dict.
+    E = {220: -4.4721, 327: -3.3513}
     alphas = sorted(ALPHA_DIRS)
     cmap = plt.cm.viridis
     norm = Normalize(vmin=0.0, vmax=1.0)

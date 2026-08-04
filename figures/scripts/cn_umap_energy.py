@@ -18,7 +18,7 @@ from matplotlib.lines import Line2D
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = ROOT / "models" / "workflows" / "fingerprints" / "umap" / "cache"
 STATEPOINTS = ROOT / "models" / "statepoint_eval" / "statepoints.json"
-FIG_OUT = ROOT / "writing" / "figures" / "cn_umap_degeneracy.png"
+FIG_OUT = Path(__file__).resolve().parents[1] / "cn_umap_degeneracy.png"  # figures/
 SRC_OUT = ROOT / "models" / "workflows" / "fingerprints" / "umap" / "umap_degeneracy.png"
 
 ALPHAS = [0.00, 0.25, 0.50, 0.75, 1.00]

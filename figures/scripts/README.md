@@ -1,29 +1,38 @@
 # Figure-generation scripts
 
-Scripts that produce the paper figures in `../` (one level up). They were authored
-against the original study tree, so their paths are **relative to that layout**
-(`Path(__file__).parents[N]`, `writing/analysis/output/`, the fingerprint/UMAP
-caches, etc.), not to `figures/scripts/`. The input data they read is mirrored into
-`../data/` (git-ignored); point each script at those files (or restore the original
-tree) before running.
+Each script here regenerates the corresponding figure in `../` from data already in
+the repo working tree. Some inputs are **git-ignored** (kept local, not pushed) — the
+figures are self-contained within the checkout, per that convention. Run a script
+from this directory:
+
+```
+cd figures/scripts && python3 <script>.py
+```
 
 ## Figure → script → data inputs
 
-| Figure (`../`) | Plot script | Data script(s) | Input data (`../data/`) |
-|---|---|---|---|
-| `cn_hea_fps_overlap_combined.png` | `combine_fps_overlap.py` | `descriptor_space_metrics.py` (CN Jaccard), `hea_mixed_fps_overlap.py` (HEA Jaccard) | `fps_jaccard_summary.csv`, `hea_mixed_fps_jaccard_summary.csv`, `cn_fingerprints.npz`, `hea_fingerprints.npz` |
-| `cn_umap_degeneracy.png` | `cn_umap_energy.py` | `make_umap_degeneracy.py`, `umap_data.py` (UMAP embedding) | `cn_fingerprints.npz`, `cn_umap_embeddings.npz` |
-| `hea_umap_degeneracy.png` | `make_umap_degeneracy_expanded.py` | (self-contained UMAP) | `umap_embeddings_3row.npz`, HEA histogram trees* |
-| `hea_frame_fingerprints.png` | `hea_frame_fingerprints.py` | — | HEA histogram trees* |
-| `theory_schematic.png` | `make_theory_schematic.py` | — | none (drawn programmatically) |
+| Figure (`../`) | Script | Input data (git-ignored) |
+|---|---|---|
+| `theory_schematic.png` | `make_theory_schematic.py` | none (drawn programmatically) |
+| `cn_hea_fps_overlap_combined.png` | `combine_fps_overlap.py` | `../data/fps_jaccard_summary.csv`, `../data/hea_mixed_fps_jaccard_summary.csv` |
+| `cn_umap_degeneracy.png` | `cn_umap_energy.py` | `../../models/workflows/fingerprints/umap/cache/{manifest.json,embeddings.npz}`, `../../models/statepoint_eval/statepoints.json` (tracked) |
+| `hea_frame_fingerprints.png` | `hea_frame_fingerprints.py` | `../data/hea_histograms/` (2 frames × 5 α) |
+| `hea_umap_degeneracy.png` | `make_umap_degeneracy_expanded.py` | `cache/umap_embeddings_3row.npz`, `cache/umap_meta_3row.npz` |
 
-\* The raw per-frame histogram trees (`alpha_*-histograms/frame_*/*.hist`) are the
-fingerprint pipeline's output and are **not** shipped here (large; git-ignored
-repo-wide). Regenerate them with the fingerprint workflow, or use the cached
-`*_fingerprints.npz` / `*_embeddings.npz` where a script supports it.
+Companion data scripts (also here, for provenance): `descriptor_space_metrics.py`,
+`hea_mixed_fps_overlap.py` (compute the Jaccard CSVs), `make_umap_degeneracy.py`,
+`umap_data.py` (compute the UMAP embeddings from raw histograms).
+
+## Notes
+
+- **No `umap` package needed.** `make_umap_degeneracy_expanded.py` rebuilds the
+  figure from cached embeddings + a small metadata cache (labels/energies); `umap`
+  is imported lazily only under `--recompute`, which also needs the full histogram
+  trees + source extxyz (not shipped — regenerate them with the fingerprint pipeline).
+- `hea_frame_fingerprints.py` ships only the two plotted frames' histograms; the two
+  DFT energies used in the panel titles are inlined (the 16 MB source extxyz is not shipped).
 
 ## Not included
 
-`cn_fps_selection_density.png` and `cn_element_switching_graphite.png` are shipped
-as images only — no script in the source tree writes those exact filenames
-(likely renamed from another output or produced interactively).
+`cn_fps_selection_density.png` and `cn_element_switching_graphite.png` are shipped as
+images only — no script in the source tree writes those exact filenames.

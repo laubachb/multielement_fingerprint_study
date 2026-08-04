@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, FancyBboxPatch
 import numpy as np
 
-OUT = Path(__file__).resolve().parents[1] / "figures" / "theory_schematic.png"
+# figures/scripts/ -> figures/ (parents[1]); write the figure one level up
+OUT = Path(__file__).resolve().parents[1] / "theory_schematic.png"
 
 mpl.rcParams.update(
     {

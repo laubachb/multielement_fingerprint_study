@@ -38,7 +38,8 @@ import matplotlib
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-import umap
+# umap is imported lazily inside main() only when recomputing embeddings; with the
+# cached embeddings present the figure regenerates without the umap package.
 from sklearn.cluster import KMeans
 
 matplotlib.rcParams.update({
@@ -276,53 +277,54 @@ def plot_figure(
 
 def main() -> None:
     args = parse_args()
-    alpha_dirs = alpha_dirs_from_transfer(args.transfer_dir)
+    cache_dir = SCRIPT_DIR / "cache"
+    emb_cache = cache_dir / "umap_embeddings_3row.npz"
+    meta_cache = cache_dir / "umap_meta_3row.npz"
+    recompute = getattr(args, "recompute", False)
 
-    for path in alpha_dirs.values():
-        if not path.is_dir():
-            raise FileNotFoundError(f"Missing alpha directory: {path}")
-    if not args.label_dir.is_dir():
-        raise FileNotFoundError(f"Missing label directory: {args.label_dir}")
+    # Fast path: rebuild the figure from cached embeddings + per-frame labels alone,
+    # without the raw histogram trees or the umap package (kept out for size/deps).
+    if emb_cache.is_file() and meta_cache.is_file() and not recompute:
+        z = np.load(emb_cache)
+        mz = np.load(meta_cache)
+        emb_all = {a: z[f"all_{a:.2f}"] for a in ALPHAS}
+        emb_mix = {a: z[f"mix_{a:.2f}"] for a in ALPHAS}
+        labels = mz["labels"]
+        print(f"Loaded cached embeddings + labels ({len(labels)} frames); "
+              "skipping raw histogram trees.")
+    else:
+        alpha_dirs = alpha_dirs_from_transfer(args.transfer_dir)
+        for path in alpha_dirs.values():
+            if not path.is_dir():
+                raise FileNotFoundError(f"Missing alpha directory: {path}")
+        if not args.label_dir.is_dir():
+            raise FileNotFoundError(f"Missing label directory: {args.label_dir}")
+        candidate_frames = get_frame_list(alpha_dirs[0.00])
+        frame_dirs = [f for f in candidate_frames if frame_ok(f, args.label_dir, alpha_dirs)]
+        labels = np.array([frame_composition_label(f, args.label_dir) for f in frame_dirs])
+        fp: dict[float, np.ndarray] = {}
+        for alpha in ALPHAS:
+            raw = np.array([load_fp(alpha_dirs[alpha], f) for f in frame_dirs])
+            fp[alpha] = drop_zero_cols(raw)
+        import umap  # lazy: only needed when recomputing embeddings
+        reducer = umap.UMAP(n_neighbors=args.n_neighbors, min_dist=args.min_dist,
+                            random_state=args.seed)
+        mm = labels == 2
+        emb_all, emb_mix = {}, {}
+        for alpha in ALPHAS:
+            emb_all[alpha] = reducer.fit_transform(fp[alpha])
+            emb_mix[alpha] = reducer.fit_transform(drop_zero_cols(fp[alpha][mm]))
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        save = {}
+        for a in ALPHAS:
+            save[f"all_{a:.2f}"] = emb_all[a]; save[f"mix_{a:.2f}"] = emb_mix[a]
+        np.savez_compressed(emb_cache, **save)
+        np.savez_compressed(meta_cache, labels=labels)
 
-    candidate_frames = get_frame_list(alpha_dirs[0.00])
-    frame_dirs = [f for f in candidate_frames if frame_ok(f, args.label_dir, alpha_dirs)]
-    n_frames = len(frame_dirs)
-    print(f"Using {n_frames} frames (missing/NaN frames dropped).")
-
-    labels = np.array([frame_composition_label(f, args.label_dir) for f in frame_dirs])
-    print(
-        "Composition counts — "
-        f"Y-only: {(labels == 0).sum()}, "
-        f"Mg-only: {(labels == 1).sum()}, "
-        f"Mixed: {(labels == 2).sum()}"
-    )
-
-    fp: dict[float, np.ndarray] = {}
-    for alpha in ALPHAS:
-        raw = np.array([load_fp(alpha_dirs[alpha], f) for f in frame_dirs])
-        fp[alpha] = drop_zero_cols(raw)
-        print(f"alpha={alpha:.2f}: fingerprint shape {fp[alpha].shape}")
-
-    reducer = umap.UMAP(
-        n_neighbors=args.n_neighbors,
-        min_dist=args.min_dist,
-        random_state=args.seed,
-    )
+    print("Composition counts — "
+          f"Y-only: {(labels == 0).sum()}, Mg-only: {(labels == 1).sum()}, "
+          f"Mixed: {(labels == 2).sum()}")
     mixed_mask = labels == 2
-
-    emb_all: dict[float, np.ndarray] = {}
-    emb_mix: dict[float, np.ndarray] = {}
-    fp_mix: dict[float, np.ndarray] = {}
-
-    for alpha in ALPHAS:
-        print(f"UMAP (all frames) alpha={alpha:.2f} ...")
-        emb_all[alpha] = reducer.fit_transform(fp[alpha])
-
-        fp_mix_raw = fp[alpha][mixed_mask]
-        fp_mix[alpha] = drop_zero_cols(fp_mix_raw)
-        print(f"UMAP (mixed only) alpha={alpha:.2f} ...")
-        emb_mix[alpha] = reducer.fit_transform(fp_mix[alpha])
-
     labels_mixed = labels[mixed_mask]
 
     km8 = KMeans(n_clusters=8, random_state=args.seed, n_init=10).fit(emb_mix[1.00])
