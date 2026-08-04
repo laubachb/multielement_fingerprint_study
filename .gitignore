@@ -222,3 +222,8 @@ hea_study/sampling/**
 !hea_study/sampling/*.py
 !hea_study/sampling/*.md
 !hea_study/pruned_models/midpoints_1e-5/*.template
+
+# Paper figures (top-level)
+!figures/
+figures/**
+!figures/*.png
