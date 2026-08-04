@@ -54,7 +54,8 @@ Shared ChIMES parameters for CN fingerprinting:
 multielement_study/
 ├── setup/                   environment variables + ChIMES install
 ├── data/                    repo-root archives + layout docs
-├── scripts/                 reorganize / cleanup helpers
+├── scripts/                 repo-level helpers + cross-study eval job
+├── figures/                 paper figures + generation scripts (figures/scripts/)
 ├── element_switching/       CN element-switching validation (graphite + liquid)
 │   ├── cn_switching_image/  element-switching figure + script (tracked)
 │   └── data/                local outputs (gitignored)
@@ -62,10 +63,16 @@ multielement_study/
 │   ├── workflows/           tracked scripts (fingerprint + full_model)
 │   ├── sampling/            FPS pruned-frame selection (tracked scripts)
 │   ├── pruned_models/       ChIMES fitting on FPS subsets (tracked scripts)
+│   │   └── midpoints_1e-1/  37.5 % / 62.5 % retention generation (λ=1e-1)
+│   ├── test_errors/         CN relative-to-full test-error figure (λ=1e-1)
 │   └── fingerprints/        CN α-sweep data trees (gitignored)
 ├── hea_study/
 │   ├── alpha_*-histograms/  HEA fingerprint workflows (scripts tracked)
+│   ├── sampling/            HEA FPS sampler (tracked)
 │   ├── chimes_model/        HEA fitting setup (fm_setup.in, run*.cmd tracked)
+│   ├── pruned_models/
+│   │   └── midpoints_1e-5/  37.5 % / 62.5 % retention generation (λ=1e-5)
+│   ├── test_errors/         HEA deviation-from-full eval + figure
 │   ├── latent_space_visuals_expanded/  HEA UMAP figure + script (tracked)
 │   └── data/                archives + frame outputs (gitignored)
 └── external/                cloned ChIMES forks (gitignored)
@@ -301,6 +308,46 @@ Histogram data: `transfer_to_local-Apr2026/` (gitignored). Composition labels:
 
 ---
 
+## Pruning-retention study & test-error evaluation
+
+FPS data pruning is evaluated across dataset-retention fractions for both systems.
+The base grids retain 25 / 50 / 75 % of the training frames; the **midpoint**
+directories add 37.5 % and 62.5 % (the exact frame-count midpoints) so the pruning
+curves are well resolved.
+
+| System | Generation | Retentions | Regularization | Test-error metric |
+|--------|-----------|-----------|----------------|-------------------|
+| CN | `models/pruned_models/` (+ `midpoints_1e-1/`) | 25 / 37.5 / 50 / 62.5 / 75 % | DLASSO **λ = 1e-1** | per-statepoint force RMSE vs DFT, **relative to the full-data model** |
+| HEA | `hea_study/pruned_models/` (+ `midpoints_1e-5/`) | 25 / 37.5 / 50 / 62.5 / 75 % | DLASSO **λ = 1e-5** | force **deviation from the full-data (`pct100`) model** on mixed holdout frames |
+
+Each midpoint directory is self-documenting (FPS → gen → solve → eval): see
+[`models/pruned_models/midpoints_1e-1/`](models/pruned_models/midpoints_1e-1/) and
+[`hea_study/pruned_models/midpoints_1e-5/`](hea_study/pruned_models/midpoints_1e-5/).
+Test-error figures and their data live in
+[`models/test_errors/`](models/test_errors/) and
+[`hea_study/test_errors/`](hea_study/test_errors/);
+[`scripts/eval_both_midpoints.cmd`](scripts/) evaluates both systems in one job.
+
+> **Note on regularization.** The two systems use different DLASSO λ: CN's larger
+> λ = 1e-1 converges cleanly on the small, correlated pruned CN fits, while the HEA
+> clean grid uses λ = 1e-5. Keep them distinct when comparing.
+
+## `figures/` — paper figures
+
+Manuscript figures with their generation scripts. Every figure (except two that are
+image-only) regenerates from a script in
+[`figures/scripts/`](figures/scripts/) against data already in the working tree
+(some git-ignored). Notably, the UMAP figures rebuild from **cached embeddings**, so
+the `umap` package is not required to regenerate them.
+
+```bash
+cd figures/scripts && python3 make_theory_schematic.py   # -> ../theory_schematic.png
+```
+
+See [`figures/README.md`](figures/) for the full figure → script → data map.
+
+---
+
 ## Quick start
 
 ```bash
@@ -326,7 +373,9 @@ sbatch run_all_alphas.sh
 
 - [chimes_calculator-LLfork](https://github.com/LindseyLab-umich/chimes_calculator-LLfork) — LAMMPS interface, histogram executable
 - [chimes_lsq-LLfork](https://github.com/LindseyLab-umich/chimes_lsq-LLfork) — ChIMES parameter fitting
-- Python: `numpy`, `pandas`, `matplotlib`, `scikit-learn`, `umap-learn`, `scipy`
+- Python: `numpy`, `pandas`, `matplotlib`, `scikit-learn`, `scipy`, and `umap-learn`
+  (only to *recompute* UMAP embeddings — the paper UMAP figures regenerate from
+  cached embeddings without it)
 
 Install ChIMES into `external/` via `setup/install_chimes.sh`. Legacy local forks
 (`chimes_calculator-myLLfork/`, etc.) may exist on disk but are gitignored.
