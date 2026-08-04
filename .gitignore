@@ -227,3 +227,9 @@ hea_study/sampling/**
 !figures/
 figures/**
 !figures/*.png
+
+# Figure-generation scripts (data inputs in figures/data/ stay ignored)
+!figures/scripts/
+figures/scripts/**
+!figures/scripts/*.py
+!figures/scripts/*.md
